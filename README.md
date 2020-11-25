@@ -1,14 +1,15 @@
 # MarkovSBM
 
 This is the version of the code that was used to produce the numerical results of our paper
-"Estimation of Static Community Memberships from Temporal Network Data"
+"Estimation of Static Community Memberships from Temporal Network Data" (arXiv:2008.04790)
 by Konstantin Avrachenkov, Maximilien Dreveton, Lasse Leskelä
+
 
 Code by Maximilien Dreveton.
 
 
 
-Content
+# Content
 
 File MarkovSBM.py: functions to generate the adjacency matrix of a Markov SBM
 File online_likelihood_clustering_known_parameters.py : contain the likelihood algorithm (Algorithm 2 of the paper)
