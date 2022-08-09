@@ -23,8 +23,8 @@ def twoStepAlgo_MarkovSBM( adjacencyTensor, mu, nu, P, Q, K = 2, tqdm_ = False, 
     if likelihoodOfNoInteractions < 0:
         A_forInitialisation = np.where( loglikelihoods > likelihoodOfNoInteractions, 1, 0 )
     else:
-        #A_forInitialisation = np.where( loglikelihoods >= likelihoodOfNoInteractions, 1, 0 )
-        A_forInitialisation = np.where( loglikelihoods > likelihoodOfNoInteractions, 1, 0 )
+        A_forInitialisation = np.where( loglikelihoods >= likelihoodOfNoInteractions, 1, 0 )
+        #A_forInitialisation = np.where( loglikelihoods > likelihoodOfNoInteractions, 1, 0 )
 
     
     sigma_tilde = sc.staticSpectralClustering( A_forInitialisation, K = K, assign_labels = 'discretize' )
