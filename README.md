@@ -11,8 +11,6 @@ Code by Maximilien Dreveton.
 
 # Content
 
-Folder nonBinarySBM: code for Algorithm 1 on non binary SBMs (i.e. SBM with Gaussian, geometric, etc. interactions)
+Folder nonBinarySBM: code for Algorithm 1 on non binary SBMs (i.e. SBM with homogeneous interactions sampled from Gaussian, exponential, geometric, etc. distributions)
 
-Folder MarkovSBM: code for Algorithms 1, 2 and 3 on synthetic instances of temporal SBMs with Markovian interactions
-
-Folder highSchoolExperiments: code for the experiments on the high school data set (Algorithm 3)
+Folder temporalSBM: code for Algorithms 1, 2 and 3 on Markov SBMs (i.e., SBM with homogeneous interactions sampled from Markov distributions) and on the 3 high school data sets from SocioPatterns. 

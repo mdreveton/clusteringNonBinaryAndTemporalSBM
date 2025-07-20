@@ -48,14 +48,24 @@ A, labels_true = generateGeneralSBM( block_sizes, kernels  )
 """
 
 
+"""
+
+for k in range( K ):
+    for ell in range( K ):
+        weights = proba_function.generate_nonzero_random_variable( size = ( len(comm_k), len(comm_ell) ) )
+        weights = np.triu( weights )
+        weights = weights + weights.T
+        np.fill_diagonal( weights.diagonal( ) / 2 )
+
+W[ comm_k, comm_ell ] = weights
+
+"""
 
 def generateGeneralSBM( block_sizes, kernels, tqdm_ = False ):
     """
     This generates a SBM with K = len( block_sizes ) blocks
     f = intra-community interaction kernel
-    g = inter-community interaction kernel
-    
-    in_parameters should be
+    g = inter-community interaction kernel    
     """
     
     N = sum( block_sizes )
@@ -64,11 +74,10 @@ def generateGeneralSBM( block_sizes, kernels, tqdm_ = False ):
     
     for k in range( K ):
         community_labels += [ k+1] * block_sizes[ k ] 
-    
-    """
-    if community_labels:
-        np.random.shuffle( community_labels )
-    """
+        
+    communities_indices = [ [] for k in range( K ) ]
+    for i in range( N ):
+        communities_indices[ community_labels[i]-1 ].append( i )
     
     A = np.zeros( ( N, N ) )
     
@@ -81,6 +90,29 @@ def generateGeneralSBM( block_sizes, kernels, tqdm_ = False ):
                 sparse = True
 
     if sparse:
+        W = np.zeros( (N,N) )
+        for k in range( K ):
+            proba_function = kernels[ k,k ]
+            weights = proba_function.generate_nonzero_random_variable( size = ( len(communities_indices[k]), len(communities_indices[k] ) ) )
+            weights = np.triu( weights )
+            weights = weights + weights.T
+            np.fill_diagonal( weights, weights.diagonal( ) / 2 )
+            W[ np.ix_(communities_indices[k], communities_indices[ k ]) ] = weights
+
+        for k in range( K ):
+            for ell in range( k ):
+                proba_function = kernels[ k,ell ]
+                weights = proba_function.generate_nonzero_random_variable( size = ( len(communities_indices[k]), len(communities_indices[ell] ) ) )
+                W[ np.ix_(communities_indices[k], communities_indices[ell]) ] = weights
+                W[ np.ix_(communities_indices[ell], communities_indices[k]) ] = weights.T
+        
+        Gbinary = nx.generators.community.stochastic_block_model( block_sizes, non_zero_probas )
+        
+        A = np.multiply( nx.adjacency_matrix( Gbinary ).todense(), W ) 
+        #A = np.where( nx.adjacency_matrix( Gbinary ).todense() * True, W, np.zeros( ( (N,N) ) ) )    
+
+        """
+        #Below is the code of the old implementation (slow but works, as of Nov 6 2024)
         Gbinary = nx.generators.community.stochastic_block_model( block_sizes, non_zero_probas )
         #Abinary = nx.adjacency_matrix( Gbinary )
         #non_zeros_indexes = Abinary.nonzero( )
@@ -93,6 +125,7 @@ def generateGeneralSBM( block_sizes, kernels, tqdm_ = False ):
             proba_function = kernels[ community_labels[ node1 ] - 1, community_labels[ node2 ] - 1 ]
             A[ node1, node2 ] = proba_function.generate_nonzero_random_variable( )
             A[ node2, node1 ] = A[ node1, node2 ]
+        """
     else:
         if (tqdm_):
             loop = tqdm(range(N))
@@ -192,8 +225,8 @@ class zeroInflatedGeometric( zeroInflatedDistributions ):
         else:
             return stats.geom.rvs( self.geometric_parameter )
     
-    def generate_nonzero_random_variable( self ):
-        return stats.geom.rvs( self.geometric_parameter )
+    def generate_nonzero_random_variable( self , size = 1 ):
+        return stats.geom.rvs( self.geometric_parameter, size = size )
     
     def mass_function( self, x ):
         return ( x==0 ) * ( 1 - self.non_zero_proba ) + self.non_zero_proba * stats.geom.pmf( x , self.geometric_parameter )
@@ -217,8 +250,8 @@ class zeroInflatedPoisson( zeroInflatedDistributions ):
         else:
             return stats.poisson.rvs( self.poisson_parameter )
     
-    def generate_nonzero_random_variable( self ):
-        return stats.poisson.rvs( self.poisson_parameter)
+    def generate_nonzero_random_variable( self, size = 1 ):
+        return stats.poisson.rvs( self.poisson_parameter, size = size )
     
     def mass_function( self, x ):
         return ( x == 0 ) * ( 1 - self.non_zero_proba ) + self.non_zero_proba * stats.poisson.pmf( x , self.poisson_parameter )
@@ -242,8 +275,8 @@ class zeroInflatedDoublyExponential( zeroInflatedDistributions ):
         else:
             return stats.expon.rvs( scale = self.exponential_parameter )
     
-    def generate_nonzero_random_variable( self ):
-        t = stats.expon.rvs( scale = self.exponential_parameter )
+    def generate_nonzero_random_variable( self, size = 1 ):
+        t = stats.expon.rvs( scale = self.exponential_parameter, size = size )
         if stats.bernoulli.rvs( 1/2 ) == 1:
             return t
         else:
@@ -276,8 +309,8 @@ class zeroInflatedNormal( zeroInflatedDistributions ):
         else:
             return stats.norm.rvs( loc= self.mean, scale = self.std )
     
-    def generate_nonzero_random_variable( self ):
-        return stats.norm.rvs( loc= self.mean, scale = self.std )    
+    def generate_nonzero_random_variable( self, size = 1 ):
+        return stats.norm.rvs( loc= self.mean, scale = self.std , size = size )    
     
     def mass_function( self, x ):
         return (x==0) * ( 1 - self.non_zero_proba ) + self.non_zero_proba * stats.norm.pdf( x , loc= self.mean, scale = self.std )
@@ -317,11 +350,11 @@ class zeroInflatedNormalMixture( zeroInflatedDistributions ):
             else:
                 return stats.norm.rvs( loc= - self.mean, scale = self.std )
     
-    def generate_nonzero_random_variable( self ):
+    def generate_nonzero_random_variable( self, size = 1 ):
         if np.random.rand() > 1/2:
-            return stats.norm.rvs( loc= self.mean, scale = self.std )
+            return stats.norm.rvs( loc= self.mean, scale = self.std, size = size )
         else:
-            return stats.norm.rvs( loc= - self.mean, scale = self.std )
+            return stats.norm.rvs( loc= - self.mean, scale = self.std, size = size )
     
     def mass_function( self, x ):
         return (x==0) * ( 1 - self.non_zero_proba ) + self.non_zero_proba *1/2 * ( stats.norm.pdf( x , loc= self.mean, scale = self.std ) + stats.norm.pdf( x , loc= -self.mean, scale = self.std ) )
@@ -351,8 +384,8 @@ class zeroInflatedGamma( zeroInflatedDistributions ):
         else:
             return stats.gamma.rvs( self.gamma_parameter, loc = self.loc, scale = self.scale )
     
-    def generate_nonzero_random_variable( self ):
-        return stats.gamma.rvs(  self.gamma_parameter, loc = self.loc, scale = self.scale )    
+    def generate_nonzero_random_variable( self, size = 1 ):
+        return stats.gamma.rvs(  self.gamma_parameter, loc = self.loc, scale = self.scale, size = size )    
     
     def mass_function( self, x ):
         return (x==0) * ( 1 - self.non_zero_proba ) + self.non_zero_proba * stats.gamma.pdf( x, self.gamma_parameter, loc = self.loc, scale = self.scale )
@@ -386,8 +419,8 @@ class zeroInflatedPareto( zeroInflatedDistributions ):
         else:
             return stats.pareto.rvs( self.pareto_parameter, loc = self.loc, scale = self.scale )
     
-    def generate_nonzero_random_variable( self ):
-        return stats.pareto.rvs(  self.pareto_parameter, loc = self.loc, scale = self.scale )    
+    def generate_nonzero_random_variable( self, size = 1 ):
+        return stats.pareto.rvs(  self.pareto_parameter, loc = self.loc, scale = self.scale, size = size )    
     
     def mass_function( self, x ):
         return (x==0) * ( 1 - self.non_zero_proba ) + self.non_zero_proba * stats.pareto.pdf( x, self.pareto_parameter, loc = self.loc, scale = self.scale )
