@@ -82,8 +82,8 @@ mu = [ 0.5, 0.5 ]
 nu = [ 0.5, 0.5 ]
 
 R = np.array( [ [0.8,0.2], [0.5, 0.5] ] ) #Figure 3a
-R = np.array( [ [0.7,0.3], [0.3, 0.7] ] )
 R = np.array( [ [0.5,0.5], [0.5, 0.5] ] ) #Figure 3b
+#R = np.array( [ [0.7,0.3], [0.3, 0.7] ] ) #For a third possibility 
 
 Delta_Q = np.array( [ [ 1, - 1 ], [ -1, 1 ] ] )
 interactionProbas = [ 1, 1 ]
@@ -121,21 +121,21 @@ dataset = 'high school 2011'
 if dataset == 'high school 2011':
     communities =  [ ['PC'], ['PC*'], ['PSI*'] ]
     xticks = [ 0, 1000, 2000, 3000, 4000, 5000 ]
-elif dataset = 'high school 2012':
+elif dataset == 'high school 2012':
     communities =  [ ['PC'], ['PC*'], ['MP*1'], ['MP*2'], ['PSI*'] ]
     xticks = [ 0, 2000, 4000, 6000, 8000, 10000 ]
     xticks = [ 0, 3000, 6000, 9000, 12000 ]
-elif dataset = 'high school 2013':
+elif dataset == 'high school 2013':
     communities = [ ['2BIO1'], ['2BIO2'], ['2BIO3'], ['MP*1'], ['MP*2'], ['MP'], ['PC'], ['PC*'], ['PSI*'] ]
     xticks = [0, 1500, 3000, 4500, 6000]
     xticks = [0, 2500, 5000, 7500 ]
-elif dataset = 'workplace 2013':
+elif dataset == 'workplace 2013':
     communities = [ ['DISQ'], ['DSE'], ['DMCT'], ['SRH'] ]
     xticks = [0, 1500, 3000, 4500, 6000]
-elif dataset = 'workplace 2015':
+elif dataset == 'workplace 2015':
     communities = [ ['DISQ'],['DMCT'],['DMI'],['DSE'],['DST'] ]
     xticks = [0, 4000, 8000, 12000, 16000]
-elif dataset = 'primary school':
+elif dataset == 'primary school':
     communities = [ ['1A'], ['1B'], ['2A'], ['2B'], 
                ['3A'], ['3B'], ['4A'], ['4B'], 
                ['5A'], ['5B'] ]
